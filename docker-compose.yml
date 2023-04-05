@@ -2,7 +2,7 @@ version: "3"
 
 services:
   ploi-roadmap:
-    image: zurdi15/romm:1.6.2
+    image: ghcr.io/selfhostedhub/docker-ploi-roadmap:latest
     container_name: ploi-roadmap
     environment:
       - APP_ENV=production
