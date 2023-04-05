@@ -52,4 +52,4 @@ echo -e "[INFO] Run NPM Production"
 npm run production
 
 echo -e "[INFO] To Finish Setup, Run php artisan roadmap:install and type yes for everything"
-echo -e "[INFO] Running On Port 9000"
+echo -e "[INFO] Running On Port 9000, 80 is exposed via Nginx"
