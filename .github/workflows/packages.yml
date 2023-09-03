@@ -1,9 +1,9 @@
 name: Release to Github Packages. # https://ghcr.io
 on: # https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#on
   workflow_dispatch:
-  push:
-    tags: # This builds for all branches with semantically versioned tags (v0.12.3).
-      - 'v*' # https://semver.org will fail, if there are any other tags
+  #push:
+    #tags: # This builds for all branches with semantically versioned tags (v0.12.3).
+     # - 'v*' # https://semver.org will fail, if there are any other tags
 
   #release: # Builds only releases. Includes draft and pre-releases.
     #types: [created]
