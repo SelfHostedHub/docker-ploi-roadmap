@@ -18,6 +18,10 @@ jobs:
       - uses: actions/checkout@v2
       - run: git fetch --tags
       - run: git remote add upstream https://github.com/${{ env.UPSTREAM_REPO }}.git || echo "Upstream already added."
+      - name: Set Git User Info
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
       - id: check_tag
         run: |
           git fetch upstream
