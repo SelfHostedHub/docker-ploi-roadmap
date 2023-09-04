@@ -8,21 +8,25 @@ on:
 jobs:
   check_tags:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     env:
       UPSTREAM_REPO: ploi/roadmap
       MY_REPO: SelfHostedHub/docker-ploi-roadmap
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - uses: actions/checkout@v2
-      - run: git fetch --tags
-      - run: git remote add upstream https://github.com/${{ env.UPSTREAM_REPO }}.git || echo "Upstream already added."
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Fetch Tags
+        run: git fetch --tags
+
+      - name: Add Upstream Remote
+        run: git remote add upstream https://github.com/${{ env.UPSTREAM_REPO }}.git || echo "Upstream already added."
+
       - name: Set Git User Info
-        run: |
-          git config --local user.email "actions@github.com"
-          git config --local user.name "GitHub Actions"
-      - id: check_tag
+        run: git config --local user.email "actions@github.com" && git config --local user.name "GitHub Actions"
+
+      - name: Check for New Tags
+        id: check_tag
         run: |
           git fetch upstream
           LATEST_UPSTREAM_TAG=$(git ls-remote --tags upstream | awk '{print $2}' | grep -v '{}' | sort -t '/' -k 3 -V | tail -n1 | sed 's/refs\/tags\///')
@@ -33,7 +37,19 @@ jobs:
           else
             echo "::set-output name=new_tag::false"
           fi
-      - if: steps.check_tag.outputs.new_tag == 'true'
+
+      - name: Check if Tag Already Exists
+        id: check_existing_tag
+        run: |
+          EXISTS=$(git tag | grep "${{ steps.check_tag.outputs.tag }}" || echo "")
+          if [[ -n "$EXISTS" ]]; then
+            echo "::set-output name=exists::true"
+          else
+            echo "::set-output name=exists::false"
+          fi
+
+      - name: Update Dockerfile and Push Changes
+        if: steps.check_tag.outputs.new_tag == 'true' && steps.check_existing_tag.outputs.exists == 'false'
         run: |
           NEW_TAG=${{ steps.check_tag.outputs.tag }}
           git checkout main
@@ -43,8 +59,13 @@ jobs:
           git push origin main
           git checkout -b updates/$NEW_TAG
           git push origin updates/$NEW_TAG
-      - run: sudo apt update && sudo apt install -y gh
-      - if: steps.check_tag.outputs.new_tag == 'true'
+
+      - name: Install GitHub CLI
+        if: steps.check_tag.outputs.new_tag == 'true' && steps.check_existing_tag.outputs.exists == 'false'
+        run: sudo apt update && sudo apt install -y gh
+
+      - name: Create Release if New Tag
+        if: steps.check_tag.outputs.new_tag == 'true' && steps.check_existing_tag.outputs.exists == 'false'
         id: create_release
         run: |
           TAG=${{ steps.check_tag.outputs.tag }}
@@ -53,7 +74,9 @@ jobs:
           echo "::set-output name=tag::$TAG"
           echo "::set-output name=commit::$COMMIT"
           echo "::set-output name=description::$DESCRIPTION"
-      - if: steps.create_release.outputs.tag != ''
+
+      - name: Push Release to Repo
+        if: steps.check_tag.outputs.new_tag == 'true' && steps.check_existing_tag.outputs.exists == 'false' && steps.create_release.outputs.tag != ''
         run: |
           TAG=${{ steps.create_release.outputs.tag }}
           COMMIT=${{ steps.create_release.outputs.commit }}
@@ -70,6 +93,7 @@ jobs:
               "draft": false,
               "prerelease": false
             }'
+
     outputs:
       tag: ${{ steps.create_release.outputs.tag }}
 
