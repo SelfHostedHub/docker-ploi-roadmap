@@ -38,15 +38,20 @@ jobs:
             echo "::set-output name=new_tag::false"
           fi
 
+      - name: Debug - List All Tags
+        run: git tag
+      
       - name: Check if Tag Already Exists
         id: check_existing_tag
         run: |
-          EXISTS=$(git tag | grep "${{ steps.check_tag.outputs.tag }}" || echo "")
-          if [[ -n "$EXISTS" ]]; then
+          EXISTS=$(git tag | grep "${{ steps.check_tag.outputs.tag }}" || echo "not found")
+          echo "EXISTS value is: $EXISTS"
+          if [[ -n "$EXISTS" && "$EXISTS" != "not found" ]]; then
             echo "::set-output name=exists::true"
           else
             echo "::set-output name=exists::false"
           fi
+
 
       - name: Update Dockerfile and Push Changes
         if: steps.check_tag.outputs.new_tag == 'true' && steps.check_existing_tag.outputs.exists == 'false'
