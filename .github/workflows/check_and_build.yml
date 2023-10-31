@@ -41,15 +41,16 @@ jobs:
       - name: Debug - List All Tags
         run: git tag
       
-      - name: Check if Tag Already Exists
-        id: check_existing_tag
+      - name: Check if tag exists
         run: |
-          EXISTS=$(git tag | grep "${{ steps.check_tag.outputs.tag }}" || echo "not found")
+          EXISTS=$(git tag -l | grep "${{ steps.check_tag.outputs.tag }}" || echo "not found")
           echo "EXISTS value is: $EXISTS"
-          if [[ -n "$EXISTS" && "$EXISTS" != "not found" ]]; then
-            echo "::set-output name=exists::true"
+          if [[ "$EXISTS" == " $EXISTS" ]]; then
+            echo "Tag ${{ steps.check_tag.outputs.tag }} exists in fork"
+            echo "exists=true" >> $GITHUB_ENV
           else
-            echo "::set-output name=exists::false"
+            echo "Tag ${{ steps.check_tag.outputs.tag }} does not exist in fork"
+            echo "exists=false" >> $GITHUB_ENV
           fi
 
 
