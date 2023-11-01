@@ -45,7 +45,7 @@ jobs:
         run: |
           EXISTS=$(git tag -l | grep "${{ steps.check_tag.outputs.tag }}" || echo "not found")
           echo "EXISTS value is: $EXISTS"
-          if [[ "$EXISTS" == " $EXISTS" ]]; then
+          if [[ "$EXISTS" == " ${{ steps.check_tag.outputs.tag }} " ]]; then
             echo "Tag ${{ steps.check_tag.outputs.tag }} exists in fork"
             echo "exists=true" >> $GITHUB_ENV
           else
