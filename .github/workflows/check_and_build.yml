@@ -16,44 +16,38 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
 
-      - name: Fetch Tags
-        run: git fetch --tags
+      - name: Fetch upstream tags
+      run: git fetch upstream 'refs/tags/*:refs/tags/upstream/*'
 
-      - name: Add Upstream Remote
-        run: git remote add upstream https://github.com/${{ env.UPSTREAM_REPO }}.git || echo "Upstream already added."
+    - name: Fetch origin tags
+      run: git fetch origin 'refs/tags/*:refs/tags/origin/*'
 
-      - name: Set Git User Info
-        run: git config --local user.email "actions@github.com" && git config --local user.name "GitHub Actions"
+    - name: Check for New Tags
+      id: check_tag
+      run: |
+        LATEST_UPSTREAM_TAG=$(git ls-remote --tags upstream | awk '{print $2}' | grep -v '{}' | sort -t '/' -k 3 -V | tail -n1 | sed 's/refs\/tags\///')
+        LATEST_MY_TAG=$(git tag -l 'origin/*' | sed 's/origin\///' | sort -t '/' -k 3 -V | tail -n1)
+        if [ "$LATEST_UPSTREAM_TAG" != "$LATEST_MY_TAG" ]; then
+          echo "::set-output name=new_tag::true"
+          echo "::set-output name=tag::${LATEST_UPSTREAM_TAG}"
+        else
+          echo "::set-output name=new_tag::false"
+        fi
 
-      - name: Check for New Tags
-        id: check_tag
-        run: |
-          git fetch upstream
-          LATEST_UPSTREAM_TAG=$(git ls-remote --tags upstream | awk '{print $2}' | grep -v '{}' | sort -t '/' -k 3 -V | tail -n1 | sed 's/refs\/tags\///')
-          git fetch origin --tags
-          LATEST_MY_TAG=$(git describe --tags `git ls-remote --tags origin | awk '{print $2}' | grep -v '{}' | sort -t '/' -k 3 -V | tail -n1 | sed 's/refs\/tags\///'`)
-          if [ "$LATEST_UPSTREAM_TAG" != "$LATEST_MY_TAG" ]; then
-            echo "::set-output name=new_tag::true"
-            echo "::set-output name=tag::${LATEST_UPSTREAM_TAG}"
-          else
-            echo "::set-output name=new_tag::false"
-          fi
+    - name: Debug - List All Tags
+      run: git tag -l
 
-      - name: Debug - List All Tags
-        run: git tag
-      
-      - name: Check if tag exists
-        run: |
-          EXISTS=$(git tag -l | grep "${{ steps.check_tag.outputs.tag }}" || echo "not found")
-          echo "EXISTS value is: $EXISTS"
-          if [[ "$EXISTS" == " ${{ steps.check_tag.outputs.tag }} " ]]; then
-            echo "Tag ${{ steps.check_tag.outputs.tag }} exists in fork"
-            echo "exists=true" >> $GITHUB_ENV
-          else
-            echo "Tag ${{ steps.check_tag.outputs.tag }} does not exist in fork"
-            echo "exists=false" >> $GITHUB_ENV
-          fi
-
+    - name: Check if tag exists
+      run: |
+        EXISTS=$(git tag -l "origin/${{ steps.check_tag.outputs.tag }}" || echo "not found")
+        echo "EXISTS value is: $EXISTS"
+        if [[ "$EXISTS" == "origin/${{ steps.check_tag.outputs.tag }}" ]]; then
+          echo "Tag ${{ steps.check_tag.outputs.tag }} exists in fork"
+          echo "exists=true" >> $GITHUB_ENV
+        else
+          echo "Tag ${{ steps.check_tag.outputs.tag }} does not exist in fork"
+          echo "exists=false" >> $GITHUB_ENV
+        fi
 
       - name: Update Dockerfile and Push Changes
         if: steps.check_tag.outputs.new_tag == 'true' && env.exists == 'false'
