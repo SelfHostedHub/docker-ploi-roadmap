@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Fetch upstream tags
-      run: git fetch upstream 'refs/tags/*:refs/tags/upstream/*'
+        run: git fetch upstream 'refs/tags/*:refs/tags/upstream/*'
 
       - name: Fetch origin tags
         run: git fetch origin 'refs/tags/*:refs/tags/origin/*'
