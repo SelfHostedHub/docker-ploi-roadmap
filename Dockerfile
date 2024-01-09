@@ -1,6 +1,6 @@
 FROM webdevops/php-nginx:8.1-alpine
 
-ENV ROADMAPVERSION=2.7
+ENV ROADMAPVERSION=2.8
 
 
 # Install Laravel framework system requirements (https://laravel.com/docs/8.x/deployment#optimizing-configuration-loading)
