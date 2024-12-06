@@ -108,7 +108,7 @@ jobs:
 
   build:
     needs: check_tags
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     if: needs.check_tags.outputs.tag != '' && needs.check_tags.outputs.tag != null
     permissions:
       packages: write
